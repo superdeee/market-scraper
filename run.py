@@ -12,7 +12,7 @@ def main(config: Dict):
     scraper_sprzedajemy = ScraperSprzedajemy(keywords, conditions, exclude)
     scraper_olx = ScraperOLX(keywords, conditions, exclude)
 
-    notifier = SlackNotifier(config["SLACK_TOKEN"], channel="#pynotify")
+    notifier = SlackNotifier(config["SLACK_TOKEN"], channel=config["SLACK_CHANNEL"])
     database = DatabasePickler(config["DB_FILENAME"])
 
     current_offers = set()
