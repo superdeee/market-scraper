@@ -2,6 +2,7 @@ from datetime import datetime
 from dataclasses import dataclass
 import pickle
 from slack import WebClient
+import yaml
 
 
 @dataclass
@@ -64,3 +65,9 @@ class DatabasePickler:
 
     def offers(self):
         return self.db
+
+
+def load_yaml_config(filepath: str):
+    with open(filepath, encoding='utf8') as f:
+        config_dict = yaml.load(f, Loader=yaml.FullLoader)
+    return config_dict
