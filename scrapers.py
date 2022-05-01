@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 import re
 from scraper_utils import Offer
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
 
 
 class Scraper(ABC):
@@ -14,10 +15,6 @@ class Scraper(ABC):
         self.keywords = keywords
         self.conditions = conditions
         self.excluded_words = excluded
-
-    def is_offer_excluded(self, offer: Offer) -> bool:
-        """Checks if offer's title contains excluded words"""
-        return any(word in offer.title for word in self.excluded_words)
 
     @staticmethod
     @abstractmethod
@@ -37,9 +34,24 @@ class Scraper(ABC):
     def list_offers(self, page_url: str, offers_count: int) -> Set[Offer]:
         pass
 
-    @abstractmethod
-    def get_offers(self) -> Set[Offer]:
-        pass
+    def get_offers(self, page_url: str) -> Set[Offer]:
+        offers_found = set()
+        offers_count = self.check_offers_count(page_url)
+        offers_list = self.list_offers(page_url, offers_count)
+        for offer in offers_list:
+            if not offer.contains_words(self.excluded_words):
+                offers_found.add(offer)
+        return offers_found
+
+    def get_all_offers(self) -> Set[Offer]:
+
+        offers_found = set()
+
+        with ThreadPoolExecutor() as executor:
+            jobs_pool = [executor.submit(self.get_offers, param) for param in self.generate_urls()]
+            [offers_found.update(job.result()) for job in jobs_pool]
+
+        return offers_found
 
 
 class ScraperOLX(Scraper):
@@ -118,23 +130,6 @@ class ScraperOLX(Scraper):
 
         return offers
 
-    def is_offer_excluded(self, offer: Offer) -> bool:
-        """Checks if offer's title contains excluded words"""
-        return any(word in offer.title for word in self.excluded_words)
-
-    def get_offers(self) -> Set[Offer]:
-        """Scrapes the pages and returns set of offers"""
-        offers_found = set()
-
-        for page_url in self.generate_urls():
-            offers_count = self.check_offers_count(page_url)
-
-            for offer in self.list_offers(page_url, offers_count):
-                if not offer.contains_words(self.excluded_words):
-                    offers_found.add(offer)
-
-        return offers_found
-
 
 class ScraperSprzedajemy(Scraper):
     URLS = {'base': 'https://sprzedajemy.pl/wszystkie-ogloszenia?',
@@ -208,17 +203,3 @@ class ScraperSprzedajemy(Scraper):
                 offers.add(offer)
 
         return offers
-
-
-    def get_offers(self) -> Set[Offer]:
-        """Scrapes the pages and returns set of offers"""
-        offers_found = set()
-
-        for page_url in self.generate_urls():
-            offers_count = self.check_offers_count(page_url)
-
-            for offer in self.list_offers(page_url, offers_count):
-                if not offer.contains_words(self.excluded_words):
-                    offers_found.add(offer)
-
-        return offers_found

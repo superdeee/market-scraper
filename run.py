@@ -17,11 +17,11 @@ def main(config: Dict):
 
     current_offers = set()
 
-    current_offers_sprzedajemy = scraper_sprzedajemy.get_offers()
-    current_offers_olx = scraper_olx.get_offers()
+    current_offers_sprzedajemy = scraper_sprzedajemy.get_all_offers()
+    current_offers_olx = scraper_olx.get_all_offers()
     current_offers = current_offers.union(current_offers_sprzedajemy, current_offers_olx)
 
-    # [notifier.notify_offer(new_offer) for new_offer in database.new_entries(current_offers, update=False)]
+    [notifier.notify_offer(new_offer) for new_offer in database.new_entries(current_offers, update=False)]
     [print(new_offer) for new_offer in database.new_entries(current_offers, update=False)]
 
     database.save()
