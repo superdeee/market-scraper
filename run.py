@@ -1,3 +1,4 @@
+import os
 from scraper_utils import *
 from scrapers import ScraperSprzedajemy, ScraperOLX
 from typing import Dict
@@ -28,5 +29,5 @@ def main(config: Dict):
 
 
 if __name__ == "__main__":
-    config = load_yaml_config("config.yaml")
+    config = load_yaml_config(os.path.join(os.path.dirname(__file__), "config.yaml"))
     main(config)
