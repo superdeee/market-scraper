@@ -7,6 +7,7 @@ import re
 from scraper_utils import Offer
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
+import hashlib
 
 
 class Scraper(ABC):
@@ -66,8 +67,9 @@ class ScraperOLX(Scraper):
         """Get offer info from offer tag"""
 
         offer_title = offer_tag.find('h6').text
-        offer_link = offer_tag["href"]
-        offer_id = hash(offer_link)
+        raw_link = offer_tag["href"]
+        offer_link = ScraperOLX.URLS["base"].split("/d/")[0] + raw_link if raw_link.startswith("/d/") else raw_link
+        offer_id = int(hashlib.md5(offer_link.encode()).hexdigest(), 16) % 10**16
 
         offer_price_text = offer_tag.find("p", attrs={"data-testid": "ad-price"}).text.strip().replace(' ', '')
         offer_price = int(re.findall(r'\d+', offer_price_text)[0])
